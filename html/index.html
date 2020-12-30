@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8"/>
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css"/>
+</head>
+
+<body>
+<div class="container" id="zt">
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>学生编号</th>
+            <th>姓名</th>
+            <th>专业</th>
+            <th>爱好</th>
+            <th>出生日期</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(temp,i) in stu">
+            <td>{{i+1}}</td>
+            <td>{{temp.sid}}</td>
+            <td>{{temp.sname}}</td>
+            <td>{{temp.smajor}}</td>
+            <td>{{temp.slove}}</td>
+            <td>{{temp.sbirthday | changeDate}}</td>
+            <td>
+                <input type="checkbox" @click="checkedOne(temp.sid)">
+                <input type="button" class="btn btn-success" value="修改" @click="updateStu2(temp.sid)"/>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <input type="button" class="btn btn-success" value="新增" @click="addStu()"/>
+    <input type="button" class="btn btn-success" value="删除" @click="del()"/>
+    <input type="button" class="btn btn-success" value="备份" @click="backups()"/>
+    <input type="button" class="btn btn-success" value="备份查询" @click="query2()"/>
+    <hr/>
+    <br/>
+    <table class="table table-bordered" v-show="stu2!=''">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>学生编号</th>
+            <th>姓名</th>
+            <th>专业</th>
+            <th>爱好</th>
+            <th>出生日期</th>
+            <th>备份时间</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(temp2,i) in stu2">
+            <td>{{i+1}}</td>
+            <td>{{temp2.sid}}</td>
+            <td>{{temp2.sname}}</td>
+            <td>{{temp2.smajor}}</td>
+            <td>{{temp2.slove}}</td>
+            <td>{{temp2.sbirthday}}</td>
+            <td>{{temp2.stime}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+<script type="text/javascript" src="../js/jquery-1.12.4.js"></script>
+<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+<script type="text/javascript" src="../js/dialog.js"></script>
+<script type="text/javascript" src="../js/vue.js"></script>
+<script type="text/javascript" src="../js/axios.min.js"></script>
+<script type="text/javascript" src="../js/axios_cfg.js"></script>
+<script type="text/javascript">
+    let app = new Vue({
+        el: "#zt",
+        data: {
+            stu: [],
+            stu2: [],
+            updateStu: [],
+            sids: []
+        },
+        methods: {
+            //初始化
+            init() {
+                let _this = this;
+                axios.get(`http://127.0.0.1:8080/y2_exam4/api/exam/queryAll`).then(function (resp) {
+                    _this.stu = resp.data;
+                })
+            },
+            //备份查询
+            query2() {
+                this.stu2 = this.stu.filter(function (temp) {
+                    return temp.stime != null;
+                });
+            },
+            //备份
+            backups() {
+//					for(var i=0;i<$("input[type='checkbox']:checked").length;i++){
+//						console.log($("input[type='checkbox']:checked:eq("+i+")").parents("tr").find("td:eq(1)").text());
+//						let s = {};
+//						s["sid"]=$("input[type='checkbox']:checked:eq("+i+")").parents("tr").find("td:eq(1)").text();
+//						s["stime"]=new Date();
+//						this.updateStu.push(s);
+//					}
+
+                this.stu.forEach((temp, index) => {
+                    if (this.sids.indexOf(temp.sid) != -1) {
+                        let s = {};
+                        s["sid"] = temp.sid
+                        s["stime"] = new Date();
+                        this.updateStu.push(s);
+                    }
+                })
+
+                console.log(this.updateStu)
+                let _this = this;
+                axios.post(`http://127.0.0.1:8080/y2_exam4/api/exam/modifyTime`, this.updateStu).then(function (resp) {
+                    showAlertDialog("备份成功")
+                    // location.reload();
+                    // location.href="index.html";
+                })
+            },
+            //修改
+            updateStu2(sid) {
+                sessionStorage.setItem("sid", sid);
+                location.href = "add.html";
+            },
+            //新增
+            addStu() {
+                sessionStorage.removeItem("sid");
+                location.href = "add.html";
+            },
+            //删除
+            del() {
+//					for(var i=0;i<$("input[type='checkbox']:checked").length;i++){
+//						console.log($("input[type='checkbox']:checked:eq("+i+")").parents("tr").find("td:eq(1)").text())
+//						this.sids.push($("input[type='checkbox']:eq("+i+")").parents("tr").find("td:eq(1)").text());
+//						console.log(this.sids)
+//					}
+                if (confirm("确定要删除吗")) {
+                    let _this = this;
+                    axios.get(`http://127.0.0.1:8080/y2_exam4/api/exam/removeBySid?sids=${this.sids}`).then(function (resp) {
+                        if (resp.data == true) {
+                            showAlertDialog("删除成功");
+                            _this.init();
+                        }
+                    })
+
+                }
+            },
+            checkedOne(id) {
+                if (this.sids.indexOf(id) != -1) {
+                    this.sids.splice(this.sids.indexOf(id), 1)
+                } else {
+                    this.sids.push(id)
+                }
+            }
+
+        },
+        filters: {
+            changeDate(val) {
+                let arr = val.split('-');
+                return `${arr[0]}年${arr[1]}月${arr[2]}日`;
+
+            }
+        },
+        mounted() {
+            this.init();
+        }
+    });
+</script>
+
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8" />
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css" />
+	</head>
+
+	<body>
+		<div class="container" id="add">
+			<!--学号：
+			<input type="text" v-model="stu.sid" />
+			<br /> 姓名：
+			<input type="text" v-model="stu.sname" />
+			<br /> 专业：
+			<input type="text" v-model="stu.smajor" />
+			<br /> 爱好：
+			<input type="text" v-model="stu.slove" />
+			<br /> 出身日期：
+			<input type="date" v-model="stu.sbirthday" />
+			<br />
+			<input type="button" class="btn btn-success" @click="save()" value="保存" />-->
+
+			<form class="form-horizontal">
+				<div class="form-group">
+					<label for="inputEmail3" class="col-sm-2 control-label">学号：</label>
+					<div class="col-sm-10">
+						<input type="text" v-model="stu.sid" class="form-control"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="inputPassword3" class="col-sm-2 control-label">姓名：</label>
+					<div class="col-sm-10">
+						<input type="text" v-model="stu.sname" class="form-control"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="inputPassword3" class="col-sm-2 control-label">专业：</label>
+					<div class="col-sm-10">
+						<input type="text" v-model="stu.smajor" class="form-control"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="inputPassword3" class="col-sm-2 control-label">爱好：</label>
+					<div class="col-sm-10">
+						<input type="text" v-model="stu.slove" class="form-control"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="inputPassword3" class="col-sm-2 control-label">日期：</label>
+					<div class="col-sm-10">
+						<input type="date" v-model="stu.sbirthday" class="form-control"/>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="inputPassword3" class="col-sm-2 control-label sr-only"> </label>
+					<div class="col-sm-10">
+						<input type="button" class="btn btn-success" @click="save()" value="保存" class="form-control"/>
+					</div>
+				</div>
+			</form>
+		</div>
+	</body>
+	<script type="text/javascript" src="../js/jquery-1.12.4.js"></script>
+	<script type="text/javascript" src="../js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="../js/dialog.js"></script>
+	<script type="text/javascript" src="../js/vue.js"></script>
+	<script type="text/javascript" src="../js/axios.min.js"></script>
+	<script type="text/javascript" src="../js/axios_cfg.js"></script>
+	<script type="text/javascript">
+		var app = new Vue({
+			el:"#add",
+			data:{
+				stu:{
+					"sid":"",
+					"sname":"",
+					"smajor":"",
+					"slove":"",
+					"sbirthday":""
+				},
+			},
+			methods:{
+				init(){
+					let sid = sessionStorage.getItem("sid");
+					console.log(sid)
+					let _this=this;
+					axios.get(`http://127.0.0.1:8080/y2_exam4/api/exam/queryById?sid=${sid}`).then(function(resp) {
+						_this.stu=resp.data;
+					})
+				},
+				save(){
+					let sid = sessionStorage.getItem("sid");
+					let _this=this;
+					if(sid){
+						axios.put(`http://127.0.0.1:8080/y2_exam4/api/exam/modifyStu`,this.stu).then(function(resp) {
+							if(resp.data==true){
+								showAlertDialog("修改成功");
+							}
+						})
+					}else{
+						axios.post(`http://127.0.0.1:8080/y2_exam4/api/exam/addStu`,this.stu).then(function(resp) {
+							if(resp.data==true){
+								showAlertDialog("新增成功");
+							}
+						})
+					}
+					
+				}
+				
+			},
+			mounted(){
+				let sid = sessionStorage.getItem("sid");
+				if(sid){
+					this.init();
+				}
+			}
+		});
+	</script>
+
+</html>
